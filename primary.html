@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大埔家長叩門專屬待辦事項</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            pink: '#FFF0F2',
+                            pinkDark: '#F48FB1',
+                            green: '#E8F5E9',
+                            greenDark: '#81C784',
+                            blue: '#E3F2FD',
+                            blueDark: '#64B5F6',
+                            yellow: '#FFFDE7',
+                            yellowDark: '#FFF176',
+                            peach: '#FFF3E0',
+                            peachDark: '#FFB74D',
+                            lavender: '#F3E5F5',
+                            lavenderDark: '#BA68C8',
+                            neutralBg: '#FAF9F6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Microsoft JhengHei', 'PingFang TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF9F6;
+            background-image: radial-gradient(#F48FB1 0.5px, transparent 0.5px), radial-gradient(#64B5F6 0.5px, #FAF9F6 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        .completed-task {
+            text-decoration: line-through;
+            text-decoration-color: #F48FB1;
+            text-decoration-thickness: 3px;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F1F1F1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFD1D6;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #F48FB1;
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-700 min-h-screen pb-12">
+
+    <!-- Navigation / Header -->
+    <header class="max-w-4xl mx-auto pt-6 px-4">
+        <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-pink-100 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-gradient-to-tr from-pink-200 to-amber-100 rounded-2xl flex items-center justify-center text-4xl shadow-inner transform rotate-[-3deg]">
+                    🐣
+                </div>
+                <div>
+                    <span class="bg-pink-100 text-pink-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">大埔區 84 校網專屬</span>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mt-1">大埔家長叩門 To-Do</h1>
+                    <p class="text-sm text-gray-500">陪伴大埔爸媽與小朋友，溫柔堅定地邁向理想學校 🏫</p>
+                </div>
+            </div>
+            <!-- Simple statistics badge -->
+            <div class="flex gap-3 bg-pastel-pink/70 p-3 rounded-2xl border border-pink-50/50 self-stretch md:self-auto justify-around">
+                <div class="text-center px-4">
+                    <span class="block text-2xl font-bold text-pink-500" id="stats-pending">0</span>
+                    <span class="text-[11px] text-gray-500 font-medium">待辦事項</span>
+                </div>
+                <div class="border-l border-pink-200/50"></div>
+                <div class="text-center px-4">
+                    <span class="block text-2xl font-bold text-emerald-500" id="stats-completed">0</span>
+                    <span class="text-[11px] text-gray-500 font-medium">已完成 🎉</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-4xl mx-auto mt-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column: Inputs and Task Form (Span 2 in lg) -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Create New Task Card -->
+            <section class="bg-white rounded-3xl p-6 shadow-sm border border-pink-100/60">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="text-pink-400"><i class="fa-solid fa-feather-pointed"></i></span>
+                    新增叩門目標 / 任務
+                </h2>
+                
+                <form id="todo-form" class="space-y-4">
+                    <!-- School Selection Row -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">選擇大埔區小學</label>
+                        <div class="relative">
+                            <select id="task-school" class="w-full bg-pastel-neutralBg border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all appearance-none cursor-pointer">
+                                <option value="" disabled selected>-- 請選擇大埔區小學 --</option>
+                                <optgroup label="✨ 大埔官立及資助小學">
+                                    <option value="大埔舊墟公立學校">大埔舊墟公立學校 (安祥路)</option>
+                                    <option value="大埔舊墟公立學校（寶湖道）">大埔舊墟公立學校（寶湖道）</option>
+                                    <option value="保良局田家炳小學">保良局田家炳小學 (運頭塘)</option>
+                                    <option value="保良局田家炳千禧小學">保良局田家炳千禧小學 (大埔公路)</option>
+                                    <option value="聖公會阮鄭夢芹小學">聖公會阮鄭夢芹小學 (廣福邨)</option>
+                                    <option value="聖公會阮鄭夢芹銀禧小學">聖公會阮鄭夢芹銀禧小學 (富亨邨)</option>
+                                    <option value="大埔官立小學">大埔官立小學 (太和路)</option>
+                                    <option value="香港教育大學賽馬會小學">香港教育大學賽馬會小學 (露屏路)</option>
+                                    <option value="天主教聖母聖心小學">天主教聖母聖心小學 (富亨邨)</option>
+                                    <option value="大埔循道衛理小學">大埔循道衛理小學 (棟樑路)</option>
+                                    <option value="港九街坊婦女會孫方中小學">港九街坊婦女會孫方中小學 (富善邨)</option>
+                                    <option value="林村公立黃福鑾紀念學校">林村公立黃福鑾紀念學校 (太和邨)</option>
+                                    <option value="仁濟醫院蔡衍濤小學">仁濟醫院蔡衍濤小學 (運頭塘)</option>
+                                    <option value="大埔浸信會公立學校">大埔浸信會公立學校 (廣福邨)</option>
+                                    <option value="三水同鄉會禤景榮學校">三水同鄉會禤景榮學校 (富善邨)</option>
+                                    <option value="新界婦孺福利會梁省德學校">新界婦孺福利會梁省德學校 (大元邨)</option>
+                                    <option value="新界婦孺福利會基督教銘恩小學">新界婦孺福利會基督教銘恩小學 (大元邨)</option>
+                                    <option value="香港道教聯合會雲泉吳禮和紀念學校">香港道教聯合會雲泉吳禮和紀念學校 (大元邨)</option>
+                                    <option value="五旬節聖潔會永光小學">五旬節聖潔會永光小學 (富亨邨)</option>
+                                </optgroup>
+                                <option value="custom">✍️ 手動輸入其他學校...</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom School Name input (appears if select "custom") -->
+                    <div id="custom-school-wrapper" class="hidden animate-[slideDown_0.2s_ease-out]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">請輸入其他學校名稱</label>
+                        <input type="text" id="custom-school-name" placeholder="例如：拔萃男書院附屬小學" class="w-full bg-pastel-neutralBg border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all">
+                    </div>
+
+                    <!-- Preset Options Helper -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">預設快速任務選項 (點擊直接填寫)</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="usePreset('已交叩門表')" class="px-3 py-1.5 bg-pastel-pink hover:bg-pink-100 text-pink-600 border border-pink-200 rounded-xl text-xs font-medium transition-all">
+                                📝 已交叩門表
+                            </button>
+                            <button type="button" onclick="usePreset('首輪面試 (First In)')" class="px-3 py-1.5 bg-pastel-blue hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl text-xs font-medium transition-all">
+                                💬 First In
+                            </button>
+                            <button type="button" onclick="usePreset('次輪面試 (Second In)')" class="px-3 py-1.5 bg-pastel-lavender hover:bg-purple-100 text-purple-600 border border-purple-200 rounded-xl text-xs font-medium transition-all">
+                                👑 Second In
+                            </button>
+                            <button type="button" onclick="usePreset('遞交補充檔案/Portfolio')" class="px-3 py-1.5 bg-pastel-peach hover:bg-orange-100 text-orange-600 border border-orange-200 rounded-xl text-xs font-medium transition-all">
+                                📁 遞交 Portfolio
+                            </button>
+                            <button type="button" onclick="usePreset('辦理註冊學位手續')" class="px-3 py-1.5 bg-pastel-green hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-medium transition-all">
+                                🎓 辦理註冊
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Task Title Input -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">任務名稱 / 事項</label>
+                        <input type="text" id="task-title" required placeholder="例如：下午2點交表 / 首輪面見準備" class="w-full bg-pastel-neutralBg border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all">
+                    </div>
+
+                    <!-- Date & Notes grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">預定日期</label>
+                            <input type="date" id="task-date" required class="w-full bg-pastel-neutralBg border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">備註 (如聯絡電話、所需文件)</label>
+                            <input type="text" id="task-notes" placeholder="例如：攜帶回郵信封、1-1-1證明" class="w-full bg-pastel-neutralBg border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Add Button -->
+                    <button type="submit" class="w-full bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 px-6 rounded-xl text-sm transition-all shadow-md shadow-pink-100 hover:shadow-lg flex items-center justify-center gap-2 transform active:scale-[0.98]">
+                        <i class="fa-solid fa-plus-circle"></i> 新增叩門任務
+                    </button>
+                </form>
+            </section>
+
+            <!-- Filter and Sort Bar -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-pink-500 text-white shadow-sm">
+                        全部
+                    </button>
+                    <button onclick="setFilter('pending')" id="filter-pending" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all text-gray-500 hover:bg-gray-100">
+                        進行中 ⏳
+                    </button>
+                    <button onclick="setFilter('completed')" id="filter-completed" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all text-gray-500 hover:bg-gray-100">
+                        已完成 🌸
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <label class="text-xs text-gray-500 font-bold whitespace-nowrap"><i class="fa-solid fa-filter"></i> 按學校過濾:</label>
+                    <select id="filter-school-select" onchange="filterBySchool(this.value)" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-pink-300">
+                        <option value="all">所有學校</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tasks List Card -->
+            <section class="space-y-4" id="tasks-container">
+                <!-- JavaScript will populate tasks here -->
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-pink-100/60 text-center text-gray-400 py-12">
+                    <div class="text-5xl mb-3">🎒</div>
+                    <p class="text-sm font-medium">目前還沒有叩門日程。</p>
+                    <p class="text-xs text-gray-400 mt-1">在上方輸入資料，開始規劃小朋友的叩門藍圖吧！</p>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Right Column: Sidebar / Handy checklist (Span 1) -->
+        <div class="space-y-6">
+            
+            <!-- Tai Po Checklist Widget -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-sky-100">
+                <div class="flex items-center gap-2 text-sky-600 font-bold text-md mb-4">
+                    <span class="text-lg">🎒</span>
+                    <h3>大埔叩門必備文件檢閱表</h3>
+                </div>
+                <p class="text-xs text-gray-400 mb-4 leading-relaxed">臨出門前請再次核對，大部份小學叩門均需準備以下正副本文件：</p>
+                
+                <ul class="space-y-3" id="checklist-container">
+                    <!-- Standard static checklists with interactive toggles -->
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-1" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-1" class="text-gray-600 select-none cursor-pointer">小一註冊證正本及複印本</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-2" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-2" class="text-gray-600 select-none cursor-pointer">自行分配學位及統一派位申請表家長副本 (必須帶備！證明 1-1-1 或 1-1-0 誠意)</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-3" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-3" class="text-gray-600 select-none cursor-pointer">學生出生證明書正本及影印本</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-4" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-4" class="text-gray-600 select-none cursor-pointer">幼稚園K2、K3成績表或評估報告影印本</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-5" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-5" class="text-gray-600 select-none cursor-pointer">學生證件相（數張，備用）</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-6" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-6" class="text-gray-600 select-none cursor-pointer">個人檔案 (Portfolio) 本，一般不超過4-5頁</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-7" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-7" class="text-gray-600 select-none cursor-pointer">貼上郵票之回郵信封數個</label>
+                    </li>
+                    <li class="flex items-start gap-2.5 text-xs">
+                        <input type="checkbox" id="check-8" class="mt-0.5 rounded text-sky-500 focus:ring-sky-300 w-4 h-4 cursor-pointer">
+                        <label for="check-8" class="text-gray-600 select-none cursor-pointer">家長自薦信 (如適用)</label>
+                    </li>
+                </ul>
+                <div class="mt-4 pt-3 border-t border-sky-100 flex justify-between items-center text-[10px] text-sky-500">
+                    <span>💡 醒目提示：可多影印幾份備用</span>
+                    <button onclick="resetChecklist()" class="hover:underline">重設</button>
+                </div>
+            </div>
+
+            <!-- Warm Tips Card -->
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-6 shadow-sm border border-amber-200/50">
+                <div class="flex items-center gap-2 text-amber-700 font-bold text-md mb-3">
+                    <span>💡</span>
+                    <h3>大埔叩門溫馨小提示</h3>
+                </div>
+                <div class="space-y-2 text-xs text-amber-900/80 leading-relaxed">
+                    <p>🎯 **誠意非常緊要**：大埔部分受歡迎學校（如大埔舊墟公立學校、寶湖道等）在名額有限時，通常會優先考慮在自行分配及統一派位乙部皆填首志願（俗稱 1-1-1）的申請者。</p>
+                    <p>🧘 **保持平常心**：叩門過程漫長，小朋友可能會累，最重要給予他們無限安全感和鼓勵。無論結果如何，爸爸媽媽都已經做得很完美！</p>
+                </div>
+            </div>
+
+            <!-- Backup & Restore Data (For parent's peace of mind) -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex justify-between items-center text-xs text-gray-500">
+                <span>💾 資料已自動保存至本地</span>
+                <button onclick="clearAllData()" class="text-red-400 hover:text-red-600 transition-colors font-medium">
+                    <i class="fa-regular fa-trash-can"></i> 清除全部
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Celebration Pop-up Overlay (Hidden by default) -->
+    <div id="celebration-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-all duration-300">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl border-4 border-pink-100 transform scale-95 opacity-0 transition-all duration-300" id="celebration-card">
+            
+            <!-- Confetti SVG animation placeholder -->
+            <div class="relative h-28 flex items-center justify-center">
+                <!-- SVG Little Waving Happy Chick with Graduate Cap -->
+                <svg class="w-24 h-24 animate-[bounce_1s_infinite]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <circle cx="50" cy="55" r="30" fill="#FFE082"/>
+                    <!-- Eyes -->
+                    <circle cx="42" cy="50" r="3" fill="#3E2723"/>
+                    <circle cx="58" cy="50" r="3" fill="#3E2723"/>
+                    <!-- Blushes -->
+                    <circle cx="36" cy="56" r="4" fill="#FF8A80" opacity="0.8"/>
+                    <circle cx="64" cy="56" r="4" fill="#FF8A80" opacity="0.8"/>
+                    <!-- Beak -->
+                    <path d="M47 54 L53 54 L50 60 Z" fill="#FF8F00"/>
+                    <!-- Graduate Cap -->
+                    <path d="M35 30 L50 22 L65 30 L50 38 Z" fill="#37474F"/>
+                    <rect x="47" y="33" width="6" height="8" fill="#37474F"/>
+                    <!-- Tassel -->
+                    <path d="M35 30 L30 36 L30 42" stroke="#FFD54F" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Left Wing (Waving) -->
+                    <path d="M16 52 C14 58 20 62 23 58" stroke="#FFE082" stroke-width="4" stroke-linecap="round" class="animate-[pulse_0.5s_infinite]"/>
+                    <!-- Right Wing -->
+                    <path d="M80 55 C84 55 81 60 77 58" stroke="#FFE082" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Little Feet -->
+                    <path d="M43 85 L43 90" stroke="#FF8F00" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M57 85 L57 90" stroke="#FF8F00" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                
+                <!-- Floating Stars -->
+                <div class="absolute top-0 left-8 text-xl animate-[pulse_1.5s_infinite] text-yellow-400">⭐</div>
+                <div class="absolute bottom-4 right-8 text-xl animate-[pulse_1.2s_infinite] text-pink-400">✨</div>
+                <div class="absolute top-6 right-10 text-lg animate-[pulse_1.8s_infinite] text-blue-400">💖</div>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mt-4 mb-2">🎉 超級好棒呀！</h3>
+            <!-- Encourgement Text Field -->
+            <p id="celebration-message" class="text-sm text-gray-600 leading-relaxed px-2 py-3 bg-pink-50 rounded-2xl border border-pink-100 font-medium">
+                大埔家長超厲害！為小朋友鼓掌！做得好！離理想學校又近一步囉！👏❤️
+            </p>
+
+            <button onclick="closeCelebration()" class="mt-6 w-full py-2.5 px-6 bg-pink-400 hover:bg-pink-500 text-white font-bold rounded-xl text-sm transition-all shadow-md active:scale-95">
+                收到！繼續加油 🍀
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Logic (Vanilla JS) -->
+    <script>
+        // Cute Cantonese encouragement quotes specifically tailored for Tai Po parents
+        const encouragementQuotes = [
+            "正呀！呢步做得好漂亮，大埔家長真係無得頂！💪✨",
+            "好嘢！又搞定一項大任務！一齊為小朋友拍拍手！🎒💖",
+            "順利完成！爸爸媽媽辛苦晒，今晚一齊食餐好嘅放鬆下！🍜🎉",
+            "大埔家長超厲害！小朋友見到你哋咁努力，一定好自豪！🌟🍀",
+            "做得好！離心儀嘅學校又近一步囉！信心滿滿！🏆🎈",
+            "完成得太棒了！休息一陣，飲杯茶，再迎向下一個挑戰！🍵🍦",
+            "關關難過關關過！爸爸媽媽，你哋同小朋友一齊做緊一件好偉大嘅事！💖✨",
+            "太棒啦！每一步付出都有回報，今天又是進步的一天！🍎🥇",
+            "這條叩門路不易走，但你正一步步踏實完成，非常棒！🌈👍",
+            "超讚！任務完成，大埔家長們，繼續加油，我們與你同在！🌻🎈",
+            "完美的進度！記得對自己說一聲：『辛苦了，我做得很好！』🌟❤️"
+        ];
+
+        // State variables
+        let todos = [];
+        let filterStatus = 'all'; // 'all', 'pending', 'completed'
+        let selectedSchoolFilter = 'all';
+
+        // Audio Context for Chime sound
+        let audioCtx = null;
+
+        // On document load
+        window.onload = function() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('task-date').value = today;
+
+            // Load from Local Storage
+            loadFromLocalStorage();
+            loadChecklistState();
+
+            // Populate school list filters
+            populateSchoolFilterDropdown();
+
+            // Handle school change (custom input)
+            document.getElementById('task-school').addEventListener('change', function() {
+                const customWrapper = document.getElementById('custom-school-wrapper');
+                if (this.value === 'custom') {
+                    customWrapper.classList.remove('hidden');
+                    document.getElementById('custom-school-name').setAttribute('required', 'true');
+                } else {
+                    customWrapper.classList.add('hidden');
+                    document.getElementById('custom-school-name').removeAttribute('required');
+                }
+            });
+
+            // Form Submit listener
+            document.getElementById('todo-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addTask();
+            });
+
+            // Initial render
+            renderTodos();
+        };
+
+        // Auto-fill preset titles
+        function usePreset(title) {
+            document.getElementById('task-title').value = title;
+            // Provide visual click feedback
+            const activeInput = document.getElementById('task-title');
+            activeInput.classList.add('ring-2', 'ring-pink-300');
+            setTimeout(() => {
+                activeInput.classList.remove('ring-2', 'ring-pink-300');
+            }, 500);
+        }
+
+        // Synthesizes a soft, uplifting chime upon task completion
+        function playSuccessSound() {
+            try {
+                // Initialize Audio Context on demand to satisfy browser policies
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                
+                // First Note (soft high G)
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(523.25, now); // C5
+                gain1.gain.setValueAtTime(0.1, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.4);
+
+                // Second Note (Harmonious E)
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(659.25, now + 0.12); // E5
+                gain2.gain.setValueAtTime(0.1, now + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.52);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now + 0.12);
+                osc2.stop(now + 0.52);
+
+                // Third Note (High happy G)
+                const osc3 = audioCtx.createOscillator();
+                const gain3 = audioCtx.createGain();
+                osc3.type = 'sine';
+                osc3.frequency.setValueAtTime(783.99, now + 0.24); // G5
+                gain3.gain.setValueAtTime(0.12, now + 0.24);
+                gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.74);
+                osc3.connect(gain3);
+                gain3.connect(audioCtx.destination);
+                osc3.start(now + 0.24);
+                osc3.stop(now + 0.74);
+
+            } catch (err) {
+                console.warn('Audio feedback failed or not supported in this browser.', err);
+            }
+        }
+
+        // Add a new task to array
+        function addTask() {
+            const schoolSelect = document.getElementById('task-school');
+            let schoolName = "";
+
+            if (schoolSelect.value === 'custom') {
+                schoolName = document.getElementById('custom-school-name').value.trim() || "其他學校";
+            } else if (schoolSelect.value) {
+                schoolName = schoolSelect.value;
+            } else {
+                schoolName = "一般叩門事宜";
+            }
+
+            const title = document.getElementById('task-title').value.trim();
+            const date = document.getElementById('task-date').value;
+            const notes = document.getElementById('task-notes').value.trim();
+
+            const newTask = {
+                id: Date.now().toString(),
+                school: schoolName,
+                title: title,
+                date: date,
+                notes: notes,
+                completed: false,
+                completedDate: null
+            };
+
+            todos.push(newTask);
+            saveToLocalStorage();
+            renderTodos();
+            populateSchoolFilterDropdown();
+
+            // Reset inputs
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-notes').value = '';
+            document.getElementById('task-school').selectedIndex = 0;
+            document.getElementById('custom-school-wrapper').classList.add('hidden');
+            document.getElementById('custom-school-name').value = '';
+            document.getElementById('custom-school-name').removeAttribute('required');
+
+            // Soft scroll to list
+            document.getElementById('tasks-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Handle Checklist State
+        document.querySelectorAll('#checklist-container input[type="checkbox"]').forEach(box => {
+            box.addEventListener('change', saveChecklistState);
+        });
+
+        function saveChecklistState() {
+            const checklistState = {};
+            document.querySelectorAll('#checklist-container input[type="checkbox"]').forEach(box => {
+                checklistState[box.id] = box.checked;
+            });
+            localStorage.setItem('taipo_checklist_state', JSON.stringify(checklistState));
+        }
+
+        function loadChecklistState() {
+            const saved = localStorage.getItem('taipo_checklist_state');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    for (const id in state) {
+                        const box = document.getElementById(id);
+                        if (box) box.checked = state[id];
+                    }
+                } catch(e) {}
+            }
+        }
+
+        function resetChecklist() {
+            document.querySelectorAll('#checklist-container input[type="checkbox"]').forEach(box => {
+                box.checked = false;
+            });
+            saveChecklistState();
+        }
+
+        // Toggle task completion
+        function toggleTask(id, isChecked) {
+            const taskIndex = todos.findIndex(t => t.id === id);
+            if (taskIndex > -1) {
+                const wasCompleted = todos[taskIndex].completed;
+                todos[taskIndex].completed = isChecked;
+                
+                if (isChecked) {
+                    // Set completion date to today by default
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    todos[taskIndex].completedDate = todayStr;
+                    
+                    // Show adorable encouragement modal!
+                    showCelebration(todos[taskIndex].school);
+                    playSuccessSound();
+                } else {
+                    todos[taskIndex].completedDate = null;
+                }
+                
+                saveToLocalStorage();
+                renderTodos();
+            }
+        }
+
+        // Change completion date directly on the card
+        function updateCompletedDate(id, newDate) {
+            const taskIndex = todos.findIndex(t => t.id === id);
+            if (taskIndex > -1) {
+                todos[taskIndex].completedDate = newDate;
+                saveToLocalStorage();
+            }
+        }
+
+        // Delete a single task
+        function deleteTask(id) {
+            todos = todos.filter(t => t.id !== id);
+            saveToLocalStorage();
+            renderTodos();
+            populateSchoolFilterDropdown();
+        }
+
+        // Filter tabs management
+        function setFilter(status) {
+            filterStatus = status;
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.classList.remove('bg-pink-500', 'text-white', 'shadow-sm');
+                btn.classList.add('text-gray-500', 'hover:bg-gray-100');
+            });
+            
+            const activeBtn = document.getElementById(`filter-${status}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-500', 'hover:bg-gray-100');
+                activeBtn.classList.add('bg-pink-500', 'text-white', 'shadow-sm');
+            }
+            renderTodos();
+        }
+
+        // Filter by specific school dropdown
+        function filterBySchool(val) {
+            selectedSchoolFilter = val;
+            renderTodos();
+        }
+
+        // Populate dropdown from schools currently in tasks
+        function populateSchoolFilterDropdown() {
+            const filterSelect = document.getElementById('filter-school-select');
+            const currentSelected = filterSelect.value;
+            
+            // Get unique schools
+            const schools = [...new Set(todos.map(t => t.school))];
+            
+            // Rebuild options
+            let html = '<option value="all">所有學校</option>';
+            schools.forEach(sch => {
+                html += `<option value="${sch}">${sch}</option>`;
+            });
+            
+            filterSelect.innerHTML = html;
+            
+            // Keep selected value if still exists
+            if (schools.includes(currentSelected) || currentSelected === 'all') {
+                filterSelect.value = currentSelected;
+                selectedSchoolFilter = currentSelected;
+            } else {
+                filterSelect.value = 'all';
+                selectedSchoolFilter = 'all';
+            }
+        }
+
+        // Main Rendering Pipeline
+        function renderTodos() {
+            const container = document.getElementById('tasks-container');
+            const statsPending = document.getElementById('stats-pending');
+            const statsCompleted = document.getElementById('stats-completed');
+
+            // Calculate overall stats
+            const totalPending = todos.filter(t => !t.completed).length;
+            const totalCompleted = todos.filter(t => t.completed).length;
+            statsPending.innerText = totalPending;
+            statsCompleted.innerText = totalCompleted;
+
+            // Apply filters
+            let filtered = todos;
+            if (filterStatus === 'pending') {
+                filtered = todos.filter(t => !t.completed);
+            } else if (filterStatus === 'completed') {
+                filtered = todos.filter(t => t.completed);
+            }
+
+            if (selectedSchoolFilter !== 'all') {
+                filtered = filtered.filter(t => t.school === selectedSchoolFilter);
+            }
+
+            // Sort tasks: Active ones (earliest date first), then Completed ones (latest completed first)
+            filtered.sort((a, b) => {
+                if (a.completed !== b.completed) {
+                    return a.completed ? 1 : -1; // Active first
+                }
+                if (!a.completed) {
+                    // Sort active by scheduled target date
+                    return new Date(a.date) - new Date(b.date);
+                } else {
+                    // Sort completed by completion date
+                    return new Date(b.completedDate || b.date) - new Date(a.completedDate || a.date);
+                }
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-3xl p-10 shadow-sm border border-gray-100 text-center text-gray-400 py-16 animate-[fadeIn_0.3s_ease-out]">
+                        <div class="text-5xl mb-3">🎐</div>
+                        <p class="text-sm font-medium">在此過濾條件下沒有找到項目。</p>
+                        <p class="text-xs text-gray-400 mt-1">試試切換其他篩選，或新增項目！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = "";
+            filtered.forEach(task => {
+                const isCompleted = task.completed;
+                const schoolDisplay = task.school || "一般叩門事項";
+                
+                // Color coding index for gentle aesthetic touches
+                let schoolColorClass = "border-l-4 border-pink-300";
+                let schoolBgClass = "bg-white";
+                
+                if (isCompleted) {
+                    schoolColorClass = "border-l-4 border-gray-300";
+                    schoolBgClass = "bg-gray-50/70";
+                } else {
+                    // Friendly color matching depending on school initials
+                    const sum = [...schoolDisplay].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const colorIndex = sum % 4;
+                    if (colorIndex === 0) schoolColorClass = "border-l-4 border-pastel-pinkDark";
+                    else if (colorIndex === 1) schoolColorClass = "border-l-4 border-pastel-blueDark";
+                    else if (colorIndex === 2) schoolColorClass = "border-l-4 border-pastel-lavenderDark";
+                    else schoolColorClass = "border-l-4 border-pastel-peachDark";
+                }
+
+                // Check overdue
+                const todayStr = new Date().toISOString().split('T')[0];
+                const isOverdue = !isCompleted && (task.date < todayStr);
+
+                html += `
+                    <div class="rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:shadow-md ${schoolBgClass} ${schoolColorClass} animate-[fadeIn_0.2s_ease-out]">
+                        <div class="flex items-start gap-3.5 flex-1">
+                            <!-- Custom Large Checkbox -->
+                            <div class="mt-1 flex items-center justify-center">
+                                <input type="checkbox" 
+                                       id="check-${task.id}" 
+                                       ${isCompleted ? 'checked' : ''} 
+                                       onchange="toggleTask('${task.id}', this.checked)" 
+                                       class="w-6 h-6 rounded-full border-2 border-pink-200 text-pink-500 focus:ring-pink-300 focus:ring-offset-0 cursor-pointer transition-all">
+                            </div>
+                            
+                            <div class="flex-1 space-y-1">
+                                <!-- Tags / Meta Info -->
+                                <div class="flex flex-wrap gap-1.5 items-center">
+                                    <span class="bg-gray-100 text-gray-600 font-bold px-2.5 py-0.5 rounded-full text-[10px] shadow-sm">
+                                        ${schoolDisplay}
+                                    </span>
+                                    ${isOverdue ? '<span class="bg-red-50 text-red-500 font-bold px-2 py-0.5 rounded-full text-[10px] animate-pulse">⏰ 迫在眉睫</span>' : ''}
+                                    ${isCompleted ? '<span class="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full text-[10px]"><i class="fa-solid fa-check"></i> 已完成</span>' : ''}
+                                </div>
+                                
+                                <!-- Task Title -->
+                                <p class="text-sm font-semibold text-gray-800 ${isCompleted ? 'completed-task text-gray-400' : ''}">
+                                    ${task.title}
+                                </p>
+                                
+                                <!-- Notes -->
+                                ${task.notes ? `<p class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-md inline-block">${task.notes}</p>` : ''}
+                                
+                                <!-- Date fields -->
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400 pt-1.5">
+                                    <span><i class="fa-regular fa-calendar"></i> 預計：${task.date}</span>
+                                    
+                                    <!-- Conditional completion date edit box -->
+                                    ${isCompleted ? `
+                                        <div class="flex items-center gap-1.5 text-emerald-600 bg-emerald-50/50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                            <span>完成於：</span>
+                                            <input type="date" 
+                                                   value="${task.completedDate || todayStr}" 
+                                                   onchange="updateCompletedDate('${task.id}', this.value)" 
+                                                   class="bg-transparent border-none p-0 outline-none focus:ring-0 text-xs font-bold w-[110px] cursor-pointer">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Delete Action -->
+                        <div class="flex items-center gap-2 justify-end self-end md:self-auto border-t md:border-t-0 pt-2 md:pt-0 border-gray-100">
+                            <button onclick="deleteTask('${task.id}')" class="text-gray-300 hover:text-red-400 p-2 rounded-full hover:bg-red-50 transition-all" title="刪除任務">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Show celebratory Modal
+        function showCelebration(schoolName) {
+            const modal = document.getElementById('celebration-modal');
+            const card = document.getElementById('celebration-card');
+            const msgEl = document.getElementById('celebration-message');
+
+            // Pick a random encouraging quote
+            const randQuote = encouragementQuotes[Math.floor(Math.random() * encouragementQuotes.length)];
+            
+            // Format message with specific school name
+            let formattedQuote = randQuote;
+            if (schoolName && schoolName !== "一般叩門事項" && schoolName !== "custom") {
+                formattedQuote = `『${schoolName}』嘅任務順利完成！${randQuote}`;
+            }
+
+            msgEl.innerText = formattedQuote;
+
+            // Make modal active
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('bg-black/40');
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 50);
+        }
+
+        // Close Celebration modal
+        function closeCelebration() {
+            const modal = document.getElementById('celebration-modal');
+            const card = document.getElementById('celebration-card');
+
+            card.classList.add('scale-95', 'opacity-0');
+            card.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // Local Storage Helpers
+        function saveToLocalStorage() {
+            localStorage.setItem('taipo_parents_todos', JSON.stringify(todos));
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('taipo_parents_todos');
+            if (stored) {
+                try {
+                    todos = JSON.parse(stored);
+                } catch(e) {
+                    todos = [];
+                }
+            } else {
+                // Prepopulate with lovely welcome tasks to show functionality
+                const todayStr = new Date().toISOString().split('T')[0];
+                const nextWeekStr = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                
+                todos = [
+                    {
+                        id: "welcome-1",
+                        school: "大埔舊墟公立學校",
+                        title: "準備叩門 1-1-1 誠意證明副本",
+                        date: todayStr,
+                        notes: "記得檢查自行及統一派位表家長副本",
+                        completed: false,
+                        completedDate: null
+                    },
+                    {
+                        id: "welcome-2",
+                        school: "大埔官立小學",
+                        title: "印定備用學生近照與Portfolio",
+                        date: todayStr,
+                        notes: "Portfolio控制在4-5頁內",
+                        completed: true,
+                        completedDate: todayStr
+                    }
+                ];
+                saveToLocalStorage();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm("確定要清除所有的叩門待辦事項與紀錄嗎？此動作無法復原。")) {
+                todos = [];
+                saveToLocalStorage();
+                renderTodos();
+                populateSchoolFilterDropdown();
+                resetChecklist();
+            }
+        }
+    </script>
+</body>
+</html>
